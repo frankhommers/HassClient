@@ -1,18 +1,18 @@
-﻿namespace HassClient.Models
+﻿namespace HassClient.Core.Models.RegistryEntries
 {
+  /// <summary>
+  ///   Defines the device entry type possible values.
+  /// </summary>
+  public enum DeviceEntryTypes
+  {
     /// <summary>
-    /// Defines the device entry type possible values.
+    ///   Device has not defined type.
     /// </summary>
-    public enum DeviceEntryTypes
-    {
-        /// <summary>
-        /// Device has not defined type.
-        /// </summary>
-        None,
+    None,
 
-        /// <summary>
-        /// Device is a service entry type.
-        /// </summary>
-        Service,
-    }
+    /// <summary>
+    ///   Device is a service entry type.
+    /// </summary>
+    Service
+  }
 }

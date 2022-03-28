@@ -1,101 +1,100 @@
-﻿using HassClient.Models;
+﻿using HassClient.Core.Models.Color;
 using NUnit.Framework;
 
-namespace HassClient.Core.Tests
+namespace HassClient.Core.Tests.Models;
+
+[TestFixture(TestOf = typeof(Color))]
+public class ColorTests
 {
-    [TestFixture(TestOf = typeof(Color))]
-    public class ColorTests
-    {
-        [Test]
-        public void FromRGB()
-        {
-            byte red = 10;
-            byte green = 20;
-            byte blue = 30;
+  [Test]
+  public void FromRGB()
+  {
+    byte red = 10;
+    byte green = 20;
+    byte blue = 30;
 
-            var color = Color.FromRGB(red, green, blue);
+    RgbColor color = Color.FromRgb(red, green, blue);
 
-            Assert.AreEqual(red, color.R);
-            Assert.AreEqual(green, color.G);
-            Assert.AreEqual(blue , color.B);
-        }
+    Assert.AreEqual(red, color.R);
+    Assert.AreEqual(green, color.G);
+    Assert.AreEqual(blue, color.B);
+  }
 
-        [Test]
-        public void FromRGBW()
-        {
-            byte red = 10;
-            byte green = 20;
-            byte blue = 30;
-            byte white = 255;
+  [Test]
+  public void FromRGBW()
+  {
+    byte red = 10;
+    byte green = 20;
+    byte blue = 30;
+    byte white = 255;
 
-            var color = Color.FromRGBW(red, green, blue, white);
+    RgbwColor color = Color.FromRgbw(red, green, blue, white);
 
-            Assert.AreEqual(red, color.R);
-            Assert.AreEqual(green, color.G);
-            Assert.AreEqual(blue, color.B);
-            Assert.AreEqual(white, color.W);
-        }
+    Assert.AreEqual(red, color.R);
+    Assert.AreEqual(green, color.G);
+    Assert.AreEqual(blue, color.B);
+    Assert.AreEqual(white, color.W);
+  }
 
-        [Test]
-        public void FromRGBWW()
-        {
-            byte red = 10;
-            byte green = 20;
-            byte blue = 30;
-            byte coldWhite = 128;
-            byte warmWhite = 255;
+  [Test]
+  public void FromRGBWW()
+  {
+    byte red = 10;
+    byte green = 20;
+    byte blue = 30;
+    byte coldWhite = 128;
+    byte warmWhite = 255;
 
-            var color = Color.FromRGBWW(red, green, blue, coldWhite, warmWhite);
+    RgbwwColor color = Color.FromRgbww(red, green, blue, coldWhite, warmWhite);
 
-            Assert.AreEqual(red, color.R);
-            Assert.AreEqual(green, color.G);
-            Assert.AreEqual(blue, color.B);
-            Assert.AreEqual(coldWhite, color.CW);
-            Assert.AreEqual(warmWhite, color.WW);
-        }
+    Assert.AreEqual(red, color.R);
+    Assert.AreEqual(green, color.G);
+    Assert.AreEqual(blue, color.B);
+    Assert.AreEqual(coldWhite, color.CW);
+    Assert.AreEqual(warmWhite, color.WW);
+  }
 
-        [Test]
-        public void FromHS()
-        {
-            uint hue = 10;
-            uint saturation = 20;
+  [Test]
+  public void FromHS()
+  {
+    uint hue = 10;
+    uint saturation = 20;
 
-            var color = Color.FromHS(hue, saturation);
+    HsColor color = Color.FromHs(hue, saturation);
 
-            Assert.AreEqual(hue, color.Hue);
-            Assert.AreEqual(saturation, color.Saturation);
-        }
+    Assert.AreEqual(hue, color.Hue);
+    Assert.AreEqual(saturation, color.Saturation);
+  }
 
-        [Test]
-        public void FromXY()
-        {
-            float x = 0.2f;
-            float y = 0.6f;
+  [Test]
+  public void FromXY()
+  {
+    float x = 0.2f;
+    float y = 0.6f;
 
-            var color = Color.FromXY(x, y);
+    XyColor color = Color.FromXy(x, y);
 
-            Assert.AreEqual(x, color.X);
-            Assert.AreEqual(y, color.Y);
-        }
+    Assert.AreEqual(x, color.X);
+    Assert.AreEqual(y, color.Y);
+  }
 
-        [Test]
-        public void FromKelvinTemperature()
-        {
-            uint kelvins = 1337;
+  [Test]
+  public void FromKelvinTemperature()
+  {
+    uint kelvins = 1337;
 
-            var color = Color.FromKelvinTemperature(kelvins);
+    KelvinTemperatureColor color = Color.FromKelvinTemperature(kelvins);
 
-            Assert.AreEqual(kelvins, color.Kelvins);
-        }
+    Assert.AreEqual(kelvins, color.Kelvins);
+  }
 
-        [Test]
-        public void FromMireds()
-        {
-            uint mireds = 256;
+  [Test]
+  public void FromMireds()
+  {
+    uint mireds = 256;
 
-            var color = Color.FromMireds(mireds);
+    MiredsTemperatureColor color = Color.FromMireds(mireds);
 
-            Assert.AreEqual(mireds, color.Mireds);
-        }
-    }
+    Assert.AreEqual(mireds, color.Mireds);
+  }
 }

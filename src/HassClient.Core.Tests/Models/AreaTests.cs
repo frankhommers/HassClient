@@ -1,89 +1,92 @@
-﻿using HassClient.Models;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using HassClient.Core.Models.RegistryEntries;
+using NUnit.Framework;
 
-namespace HassClient.Core.Tests
+namespace HassClient.Core.Tests.Models;
+
+[TestFixture(TestOf = typeof(Area))]
+public class AreaTests
 {
-    [TestFixture(TestOf = typeof(Area))]
-    public class AreaTests
-    {
-        [Test]
-        public void HasPublicConstructorWithParameters()
-        {
-            var constructor = typeof(Area).GetConstructors()
-                                          .FirstOrDefault(x => x.IsPublic && x.GetParameters().Length > 0);
-            Assert.NotNull(constructor);
-        }
+  [Test]
+  public void HasPublicConstructorWithParameters()
+  {
+    ConstructorInfo constructor = typeof(Area).GetConstructors()
+      .FirstOrDefault(x => x.IsPublic && x.GetParameters().Length > 0);
+    Assert.NotNull(constructor);
+  }
 
-        [Test]
-        public void NewAreaHasPendingChanges()
-        {
-            var testEntry = new Area(MockHelpers.GetRandomTestName());
-            Assert.IsTrue(testEntry.HasPendingChanges);
-        }
+  [Test]
+  public void NewAreaHasPendingChanges()
+  {
+    Area testEntry = new(MockHelpers.GetRandomTestName());
+    Assert.IsTrue(testEntry.HasPendingChanges);
+  }
 
-        [Test]
-        public void NewAreaIsUntracked()
-        {
-            var testEntry = new Area(MockHelpers.GetRandomTestName());
-            Assert.False(testEntry.IsTracked);
-        }
+  [Test]
+  public void NewAreaIsUntracked()
+  {
+    Area testEntry = new(MockHelpers.GetRandomTestName());
+    Assert.False(testEntry.IsTracked);
+  }
 
-        private static IEnumerable<string> NullOrWhiteSpaceStringValues() => RegistryEntryBaseTests.NullOrWhiteSpaceStringValues();
+  private static IEnumerable<string> NullOrWhiteSpaceStringValues()
+  {
+    return RegistryEntryBaseTests.NullOrWhiteSpaceStringValues();
+  }
 
-        [Test]
-        [TestCaseSource(nameof(NullOrWhiteSpaceStringValues))]
-        public void NewAreaWithNullOrWhiteSpaceNameThrows(string value)
-        {
-            Assert.Throws<ArgumentException>(() => new Area(value));
-        }
+  [Test]
+  [TestCaseSource(nameof(NullOrWhiteSpaceStringValues))]
+  public void NewAreaWithNullOrWhiteSpaceNameThrows(string value)
+  {
+    Assert.Throws<ArgumentException>(() => new Area(value));
+  }
 
-        [Test]
-        public void SetNewNameMakesHasPendingChangesTrue()
-        {
-            var testEntry = this.CreateTestEntry(out var initialName, out _);
+  [Test]
+  public void SetNewNameMakesHasPendingChangesTrue()
+  {
+    Area testEntry = CreateTestEntry(out string initialName, out _);
 
-            testEntry.Name = MockHelpers.GetRandomTestName();
-            Assert.IsTrue(testEntry.HasPendingChanges);
+    testEntry.Name = MockHelpers.GetRandomTestName();
+    Assert.IsTrue(testEntry.HasPendingChanges);
 
-            testEntry.Name = initialName;
-            Assert.False(testEntry.HasPendingChanges);
-        }
+    testEntry.Name = initialName;
+    Assert.False(testEntry.HasPendingChanges);
+  }
 
-        [Test]
-        public void SetNewPictureMakesHasPendingChangesTrue()
-        {
-            var testEntry = this.CreateTestEntry(out _, out var picture);
+  [Test]
+  public void SetNewPictureMakesHasPendingChangesTrue()
+  {
+    Area testEntry = CreateTestEntry(out _, out string picture);
 
-            testEntry.Picture = $"/test/{MockHelpers.GetRandomTestName()}.png";
-            Assert.IsTrue(testEntry.HasPendingChanges);
+    testEntry.Picture = $"/test/{MockHelpers.GetRandomTestName()}.png";
+    Assert.IsTrue(testEntry.HasPendingChanges);
 
-            testEntry.Picture = picture;
-            Assert.False(testEntry.HasPendingChanges);
-        }
+    testEntry.Picture = picture;
+    Assert.False(testEntry.HasPendingChanges);
+  }
 
-        [Test]
-        public void DiscardPendingChanges()
-        {
-            var testEntry = this.CreateTestEntry(out var initialName, out var initialPicture);
+  [Test]
+  public void DiscardPendingChanges()
+  {
+    Area testEntry = CreateTestEntry(out string initialName, out string initialPicture);
 
-            testEntry.Name = MockHelpers.GetRandomTestName();
-            testEntry.Picture = $"/test/{MockHelpers.GetRandomTestName()}.png";
-            Assert.IsTrue(testEntry.HasPendingChanges);
+    testEntry.Name = MockHelpers.GetRandomTestName();
+    testEntry.Picture = $"/test/{MockHelpers.GetRandomTestName()}.png";
+    Assert.IsTrue(testEntry.HasPendingChanges);
 
-            testEntry.DiscardPendingChanges();
-            Assert.False(testEntry.HasPendingChanges);
-            Assert.AreEqual(initialName, testEntry.Name);
-            Assert.AreEqual(initialPicture, testEntry.Picture);
-        }
+    testEntry.DiscardPendingChanges();
+    Assert.False(testEntry.HasPendingChanges);
+    Assert.AreEqual(initialName, testEntry.Name);
+    Assert.AreEqual(initialPicture, testEntry.Picture);
+  }
 
-        private Area CreateTestEntry(out string name, out string picture)
-        {
-            name = MockHelpers.GetRandomTestName();
-            picture = "/test/Picture.png";
-            return Area.CreateUnmodified(name, picture);
-        }
-    }
+  private Area CreateTestEntry(out string name, out string picture)
+  {
+    name = MockHelpers.GetRandomTestName();
+    picture = "/test/Picture.png";
+    return Area.CreateUnmodified(name, picture);
+  }
 }

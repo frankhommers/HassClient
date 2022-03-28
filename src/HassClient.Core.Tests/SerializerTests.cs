@@ -1,205 +1,207 @@
-﻿using HassClient.Models;
-using HassClient.Serialization;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.Reflection;
 using System.Runtime.Serialization;
+using HassClient.Core.Models.Events;
+using HassClient.Core.Models.KnownEnums;
+using HassClient.Core.Serialization;
+using Newtonsoft.Json.Linq;
+using NUnit.Framework;
 
-namespace HassClient.Core.Tests
+namespace HassClient.Core.Tests;
+
+[TestFixture(TestOf = typeof(HassSerializer))]
+public class SerializerTests
 {
-    [TestFixture(TestOf = typeof(HassSerializer))]
-    public class SerializerTests
-    {
-        private const string expectedTestValueEnumResult = "test_value";
-        private const string expectedEnumMemberTestValueEnumResult = "customized_name";
-        private const string expectedTestPropertyResult = "test_property";
-        private const string expectedTestFieldResult = "test_field";
+  private const string expectedTestValueEnumResult = "test_value";
+  private const string expectedEnumMemberTestValueEnumResult = "customized_name";
+  private const string expectedTestPropertyResult = "test_property";
+  private const string expectedTestFieldResult = "test_field";
 
-        private enum TestEnum
-        {
-            DefaultValue = 0,
+  private enum TestEnum
+  {
+    DefaultValue = 0,
 
-            TestValue,
+    TestValue,
 
-            [EnumMember(Value = expectedEnumMemberTestValueEnumResult)]
-            EnumMemberTestValue,
-        }
+    [EnumMember(Value = expectedEnumMemberTestValueEnumResult)]
+    EnumMemberTestValue
+  }
 
-        private class TestClass
-        {
-            public string TestProperty { get; set; }
+  private class TestClass
+  {
+    public string TestField;
+    public string TestProperty { get; set; }
+  }
 
-            public string TestField;
-        }
+  [Test]
+  public void EnumToSnakeCase()
+  {
+    string result = TestEnum.TestValue.ToSnakeCase();
 
-        [Test]
-        public void EnumToSnakeCase()
-        {
-            var result = TestEnum.TestValue.ToSnakeCase();
+    Assert.NotNull(result);
+    Assert.AreEqual(expectedTestValueEnumResult, result);
+  }
 
-            Assert.NotNull(result);
-            Assert.AreEqual(expectedTestValueEnumResult, result);
-        }
+  [Test]
+  public void EnumToSnakeCasePriorizesEnumMemberAttribute()
+  {
+    TestEnum value = TestEnum.EnumMemberTestValue;
+    MemberInfo[] memInfo = typeof(TestEnum).GetMember(value.ToString());
+    string attribValue = memInfo[0].GetCustomAttribute<EnumMemberAttribute>().Value;
+    string result = value.ToSnakeCase();
 
-        [Test]
-        public void EnumToSnakeCasePriorizesEnumMemberAttribute()
-        {
-            var value = TestEnum.EnumMemberTestValue;
-            var memInfo = typeof(TestEnum).GetMember(value.ToString());
-            var attribValue = memInfo[0].GetCustomAttribute<EnumMemberAttribute>().Value;
-            var result = value.ToSnakeCase();
+    Assert.NotNull(result);
+    Assert.AreEqual(attribValue, result);
+  }
 
-            Assert.NotNull(result);
-            Assert.AreEqual(attribValue, result);
-        }
+  [Test]
+  [TestCase(KnownDomains.Automation)]
+  [TestCase(KnownEventTypes.AreaRegistryUpdated)]
+  [TestCase(KnownServices.AddonRestart)]
+  public void EnumToSnakeCaseWithKnownEnumThrows<T>(T value)
+    where T : Enum
+  {
+    Assert.Throws<InvalidOperationException>(() => value.ToSnakeCase());
+  }
 
-        [Test]
-        [TestCase(KnownDomains.Automation)]
-        [TestCase(KnownEventTypes.AreaRegistryUpdated)]
-        [TestCase(KnownServices.AddonRestart)]
-        public void EnumToSnakeCaseWithKnownEnumThrows<T>(T value)
-            where T : Enum
-        {
-            Assert.Throws<InvalidOperationException>(() => value.ToSnakeCase());
-        }
+  [Test]
+  public void TryGetEnumFromSnakeCase()
+  {
+    bool success = HassSerializer.TryGetEnumFromSnakeCase(expectedTestValueEnumResult, out TestEnum result);
 
-        [Test]
-        public void TryGetEnumFromSnakeCase()
-        {
-            var success = HassSerializer.TryGetEnumFromSnakeCase<TestEnum>(expectedTestValueEnumResult, out var result);
+    Assert.IsTrue(success);
+    Assert.AreEqual(TestEnum.TestValue, result);
+  }
 
-            Assert.IsTrue(success);
-            Assert.AreEqual(TestEnum.TestValue, result);
-        }
+  [Test]
+  public void TryGetEnumFromSnakeCaseWithInvalidValue()
+  {
+    bool success = HassSerializer.TryGetEnumFromSnakeCase("invalid_value", out TestEnum result);
 
-        [Test]
-        public void TryGetEnumFromSnakeCaseWithInvalidValue()
-        {
-            var success = HassSerializer.TryGetEnumFromSnakeCase<TestEnum>("invalid_value", out var result);
+    Assert.IsFalse(success);
+    Assert.AreEqual(default(TestEnum), result);
+  }
 
-            Assert.IsFalse(success);
-            Assert.AreEqual(default(TestEnum), result);
-        }
+  [Test]
+  public void EnumValuesAreConvertedToSnakeCase()
+  {
+    TestEnum value = TestEnum.TestValue;
+    string result = HassSerializer.SerializeObject(value);
 
-        [Test]
-        public void EnumValuesAreConvertedToSnakeCase()
-        {
-            var value = TestEnum.TestValue;
-            var result = HassSerializer.SerializeObject(value);
+    Assert.NotNull(result);
+    Assert.AreEqual($"\"{expectedTestValueEnumResult}\"", result);
+  }
 
-            Assert.NotNull(result);
-            Assert.AreEqual($"\"{expectedTestValueEnumResult}\"", result);
-        }
+  [Test]
+  public void EnumValuesAreConvertedToSnakeCasePriorizingEnumMemberAttribute()
+  {
+    TestEnum value = TestEnum.EnumMemberTestValue;
+    MemberInfo[] memInfo = typeof(TestEnum).GetMember(value.ToString());
+    string attribValue = memInfo[0].GetCustomAttribute<EnumMemberAttribute>().Value;
+    string result = HassSerializer.SerializeObject(value);
 
-        [Test]
-        public void EnumValuesAreConvertedToSnakeCasePriorizingEnumMemberAttribute()
-        {
+    Assert.NotNull(result);
+    Assert.AreEqual($"\"{attribValue}\"", result);
+  }
 
-            var value = TestEnum.EnumMemberTestValue;
-            var memInfo = typeof(TestEnum).GetMember(value.ToString());
-            var attribValue = memInfo[0].GetCustomAttribute<EnumMemberAttribute>().Value;
-            var result = HassSerializer.SerializeObject(value);
+  [Test]
+  public void EnumValuesAreConvertedFromSnakeCase()
+  {
+    TestEnum result = HassSerializer.DeserializeObject<TestEnum>($"\"{expectedTestValueEnumResult}\"");
 
-            Assert.NotNull(result);
-            Assert.AreEqual($"\"{attribValue}\"", result);
-        }
+    Assert.NotNull(result);
+    Assert.AreEqual(TestEnum.TestValue, result);
+  }
 
-        [Test]
-        public void EnumValuesAreConvertedFromSnakeCase()
-        {
-            var result = HassSerializer.DeserializeObject<TestEnum>($"\"{expectedTestValueEnumResult}\"");
+  [Test]
+  public void EnumValuesAreConvertedFromSnakeCasePriorizingEnumMemberAttribute()
+  {
+    TestEnum value = TestEnum.EnumMemberTestValue;
+    MemberInfo[] memInfo = typeof(TestEnum).GetMember(value.ToString());
+    string attribValue = memInfo[0].GetCustomAttribute<EnumMemberAttribute>().Value;
+    TestEnum result = HassSerializer.DeserializeObject<TestEnum>($"\"{attribValue}\"");
 
-            Assert.NotNull(result);
-            Assert.AreEqual(TestEnum.TestValue, result);
-        }
+    Assert.NotNull(result);
+    Assert.AreEqual(value, result);
+  }
 
-        [Test]
-        public void EnumValuesAreConvertedFromSnakeCasePriorizingEnumMemberAttribute()
-        {
+  [Test]
+  public void PropertiesAreConvertedToSnakeCase()
+  {
+    TestClass value = new() { TestProperty = nameof(TestClass.TestProperty) };
+    string result = HassSerializer.SerializeObject(value);
 
-            var value = TestEnum.EnumMemberTestValue;
-            var memInfo = typeof(TestEnum).GetMember(value.ToString());
-            var attribValue = memInfo[0].GetCustomAttribute<EnumMemberAttribute>().Value;
-            var result = HassSerializer.DeserializeObject<TestEnum>($"\"{attribValue}\"");
+    Assert.NotNull(result);
+    Assert.IsTrue(result.Contains($"\"{expectedTestPropertyResult}\":\"{value.TestProperty}\""));
+  }
 
-            Assert.NotNull(result);
-            Assert.AreEqual(value, result);
-        }
+  [Test]
+  public void PropertiesAreConvertedFromSnakeCase()
+  {
+    TestClass result =
+      HassSerializer.DeserializeObject<TestClass>(
+        $"{{\"{expectedTestPropertyResult}\":\"{nameof(TestClass.TestProperty)}\"}}");
 
-        [Test]
-        public void PropertiesAreConvertedToSnakeCase()
-        {
-            var value = new TestClass() { TestProperty = nameof(TestClass.TestProperty) };
-            var result = HassSerializer.SerializeObject(value);
+    Assert.NotNull(result);
+    Assert.AreEqual(nameof(TestClass.TestProperty), result.TestProperty);
+  }
 
-            Assert.NotNull(result);
-            Assert.IsTrue(result.Contains($"\"{expectedTestPropertyResult}\":\"{value.TestProperty}\""));
-        }
+  [Test]
+  public void FieldsAreConvertedToSnakeCase()
+  {
+    TestClass value = new() { TestField = nameof(TestClass.TestField) };
+    string result = HassSerializer.SerializeObject(value);
 
-        [Test]
-        public void PropertiesAreConvertedFromSnakeCase()
-        {
-            var result = HassSerializer.DeserializeObject<TestClass>($"{{\"{expectedTestPropertyResult}\":\"{nameof(TestClass.TestProperty)}\"}}");
+    Assert.NotNull(result);
+    Assert.IsTrue(result.Contains($"\"{expectedTestFieldResult}\":\"{value.TestField}\""));
+  }
 
-            Assert.NotNull(result);
-            Assert.AreEqual(nameof(TestClass.TestProperty), result.TestProperty);
-        }
+  [Test]
+  public void FieldsAreConvertedFromSnakeCase()
+  {
+    TestClass result =
+      HassSerializer.DeserializeObject<TestClass>(
+        $"{{\"{expectedTestFieldResult}\":\"{nameof(TestClass.TestField)}\"}}");
 
-        [Test]
-        public void FieldsAreConvertedToSnakeCase()
-        {
-            var value = new TestClass() { TestField = nameof(TestClass.TestField) };
-            var result = HassSerializer.SerializeObject(value);
+    Assert.NotNull(result);
+    Assert.AreEqual(nameof(TestClass.TestField), result.TestField);
+  }
 
-            Assert.NotNull(result);
-            Assert.IsTrue(result.Contains($"\"{expectedTestFieldResult}\":\"{value.TestField}\""));
-        }
+  [Test]
+  public void JObjectPropertiesAreConvertedToSnakeCase()
+  {
+    TestClass value = new() { TestProperty = nameof(TestClass.TestProperty) };
+    JObject result = HassSerializer.CreateJObject(value);
 
-        [Test]
-        public void FieldsAreConvertedFromSnakeCase()
-        {
-            var result = HassSerializer.DeserializeObject<TestClass>($"{{\"{expectedTestFieldResult}\":\"{nameof(TestClass.TestField)}\"}}");
+    Assert.NotNull(result);
+    Assert.AreEqual(value.TestProperty, result.GetValue(expectedTestPropertyResult).ToString());
+  }
 
-            Assert.NotNull(result);
-            Assert.AreEqual(nameof(TestClass.TestField), result.TestField);
-        }
+  [Test]
+  public void JObjectFieldsAreConvertedToSnakeCase()
+  {
+    TestClass value = new() { TestField = nameof(TestClass.TestField) };
+    JObject result = HassSerializer.CreateJObject(value);
 
-        [Test]
-        public void JObjectPropertiesAreConvertedToSnakeCase()
-        {
-            var value = new TestClass() { TestProperty = nameof(TestClass.TestProperty) };
-            var result = HassSerializer.CreateJObject(value);
+    Assert.NotNull(result);
+    Assert.AreEqual(value.TestField, result.GetValue(expectedTestFieldResult).ToString());
+  }
 
-            Assert.NotNull(result);
-            Assert.AreEqual(value.TestProperty, result.GetValue(expectedTestPropertyResult).ToString());
-        }
+  [Test]
+  public void JObjectWithSelectedProperties()
+  {
+    string[] selectedProperties = { nameof(TestClass.TestProperty) };
+    JObject result = HassSerializer.CreateJObject(new TestClass(), selectedProperties);
 
-        [Test]
-        public void JObjectFieldsAreConvertedToSnakeCase()
-        {
-            var value = new TestClass() { TestField = nameof(TestClass.TestField) };
-            var result = HassSerializer.CreateJObject(value);
+    Assert.NotNull(result);
+    Assert.AreEqual(1, result.Count);
+    Assert.IsTrue(result.ContainsKey(expectedTestPropertyResult));
+    Assert.IsFalse(result.ContainsKey(expectedTestFieldResult));
+  }
 
-            Assert.NotNull(result);
-            Assert.AreEqual(value.TestField, result.GetValue(expectedTestFieldResult).ToString());
-        }
-
-        [Test]
-        public void JObjectWithSelectedProperties()
-        {
-            var selectedProperties = new[] { nameof(TestClass.TestProperty) };
-            var result = HassSerializer.CreateJObject(new TestClass(), selectedProperties);
-
-            Assert.NotNull(result);
-            Assert.AreEqual(1, result.Count);
-            Assert.IsTrue(result.ContainsKey(expectedTestPropertyResult));
-            Assert.IsFalse(result.ContainsKey(expectedTestFieldResult));
-        }
-
-        [Test]
-        public void JObjectFromNullThrows()
-        {
-            Assert.Throws<ArgumentNullException>(() => HassSerializer.CreateJObject(null));
-        }
-    }
+  [Test]
+  public void JObjectFromNullThrows()
+  {
+    Assert.Throws<ArgumentNullException>(() => HassSerializer.CreateJObject(null));
+  }
 }

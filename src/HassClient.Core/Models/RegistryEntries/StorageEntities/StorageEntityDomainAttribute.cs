@@ -1,25 +1,26 @@
 ﻿using System;
+using HassClient.Core.Models.KnownEnums;
 
-namespace HassClient.Models
+namespace HassClient.Core.Models.RegistryEntries.StorageEntities
 {
+  /// <summary>
+  ///   Attribute used to specify the domain of a <see cref="StorageEntityRegistryEntryBase" />.
+  /// </summary>
+  [AttributeUsage(AttributeTargets.Class)]
+  public class StorageEntityDomainAttribute : Attribute
+  {
     /// <summary>
-    /// Attribute used to specify the domain of a <see cref="StorageEntityRegistryEntryBase"/>.
+    ///   Initializes a new instance of the <see cref="StorageEntityDomainAttribute" /> class.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class)]
-    public class StorageEntityDomainAttribute : Attribute
+    /// <param name="domain">The storage entity registry entry domain.</param>
+    public StorageEntityDomainAttribute(KnownDomains domain)
     {
-        /// <summary>
-        /// Gets or sets the storage entity registry entry domain.
-        /// </summary>
-        public KnownDomains Domain { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StorageEntityDomainAttribute"/> class.
-        /// </summary>
-        /// <param name="domain">The storage entity registry entry domain.</param>
-        public StorageEntityDomainAttribute(KnownDomains domain)
-        {
-            this.Domain = domain;
-        }
+      Domain = domain;
     }
+
+    /// <summary>
+    ///   Gets or sets the storage entity registry entry domain.
+    /// </summary>
+    public KnownDomains Domain { get; set; }
+  }
 }

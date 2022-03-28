@@ -1,63 +1,62 @@
-﻿using HassClient.Models;
-using HassClient.Serialization;
+﻿using System.IO;
+using HassClient.Core.Models;
+using HassClient.Core.Serialization.Converters;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using System.IO;
 
-namespace HassClient.Core.Tests
+namespace HassClient.Core.Tests.Converters;
+
+[TestFixture(TestOf = typeof(CalVerConverter))]
+public class CalVerConverterTests
 {
-    [TestFixture(TestOf = typeof(CalVerConverter))]
-    public class CalVerConverterTests
-    {
-        private readonly CalVerConverter converter = new CalVerConverter();
+  private readonly CalVerConverter converter = new();
 
-        private readonly CalVer testVersion = CalVer.Create("2022.02.4b3");
+  private readonly CalVer testVersion = CalVer.Create("2022.02.4b3");
 
-        [Test]
-        public void CanConvertCalVer()
-        {
-            var canConvert = converter.CanConvert(typeof(CalVer));
+  [Test]
+  public void CanConvertCalVer()
+  {
+    bool canConvert = converter.CanConvert(typeof(CalVer));
 
-            Assert.True(canConvert);
-        }
+    Assert.True(canConvert);
+  }
 
-        [Test]
-        public void WriteJson()
-        {
-            var textWriter = new StringWriter();
-            var jsonWriter = new JsonTextWriter(textWriter);
-            var serializer = JsonSerializer.Create();
+  [Test]
+  public void WriteJson()
+  {
+    StringWriter textWriter = new();
+    JsonTextWriter jsonWriter = new(textWriter);
+    JsonSerializer serializer = JsonSerializer.Create();
 
-            converter.WriteJson(jsonWriter, testVersion, serializer);
+    converter.WriteJson(jsonWriter, testVersion, serializer);
 
-            Assert.AreEqual($"\"{testVersion}\"", textWriter.ToString());
-        }
+    Assert.AreEqual($"\"{testVersion}\"", textWriter.ToString());
+  }
 
-        [Test]
-        public void ReadJson()
-        {
-            var textReader = new StringReader($"\"{testVersion}\"");
-            var jsonReader = new JsonTextReader(textReader);
-            var serializer = JsonSerializer.Create();
-            var result = converter.ReadJson(jsonReader, testVersion.GetType(), null, serializer);
+  [Test]
+  public void ReadJson()
+  {
+    StringReader textReader = new($"\"{testVersion}\"");
+    JsonTextReader jsonReader = new(textReader);
+    JsonSerializer serializer = JsonSerializer.Create();
+    object result = converter.ReadJson(jsonReader, testVersion.GetType(), null, serializer);
 
-            Assert.NotNull(result);
-            Assert.AreNotEqual(testVersion, result);
-            Assert.AreEqual(testVersion.ToString(), result.ToString());
-        }
+    Assert.NotNull(result);
+    Assert.AreNotEqual(testVersion, result);
+    Assert.AreEqual(testVersion.ToString(), result.ToString());
+  }
 
-        public void ReadJsonWithExisingValue()
-        {
-            var existingVersion = CalVer.Create("2021.05.7b1");
+  public void ReadJsonWithExisingValue()
+  {
+    CalVer existingVersion = CalVer.Create("2021.05.7b1");
 
-            var textReader = new StringReader(testVersion.ToString());
-            var jsonReader = new JsonTextReader(textReader);
-            var serializer = JsonSerializer.Create();
-            var result = converter.ReadJson(jsonReader, testVersion.GetType(), existingVersion, serializer);
+    StringReader textReader = new(testVersion.ToString());
+    JsonTextReader jsonReader = new(textReader);
+    JsonSerializer serializer = JsonSerializer.Create();
+    object result = converter.ReadJson(jsonReader, testVersion.GetType(), existingVersion, serializer);
 
-            Assert.NotNull(result);
-            Assert.AreEqual(existingVersion, result);
-            Assert.AreEqual(testVersion.ToString(), result.ToString());
-        }
-    }
+    Assert.NotNull(result);
+    Assert.AreEqual(existingVersion, result);
+    Assert.AreEqual(testVersion.ToString(), result.ToString());
+  }
 }
