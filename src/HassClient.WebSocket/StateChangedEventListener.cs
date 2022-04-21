@@ -68,9 +68,9 @@ namespace HassClient.WebSocket
     /// </summary>
     /// <param name="entityId">The id of the entity to track.</param>
     /// <param name="value">The <see cref="EventHandler{StateChangedEvent}" /> to be included.</param>
-    public void SubscribeEntityStatusChanged(string entityId, EventHandler<StateChangedEvent> value)
+    public void SubscribeEntityStateChanged(string entityId, EventHandler<StateChangedEvent> value)
     {
-      InternalSubscribeStatusChanged(_stateChangedSubscriptionsByEntityId, entityId, value);
+      InternalSubscribeStateChanged(_stateChangedSubscriptionsByEntityId, entityId, value);
     }
 
     /// <summary>
@@ -78,9 +78,9 @@ namespace HassClient.WebSocket
     /// </summary>
     /// <param name="entityId">The id of the tracked entity.</param>
     /// <param name="value">The <see cref="EventHandler{StateChangedEvent}" /> to be removed.</param>
-    public void UnsubscribeEntityStatusChanged(string entityId, EventHandler<StateChangedEvent> value)
+    public void UnsubscribeEntityStateChanged(string entityId, EventHandler<StateChangedEvent> value)
     {
-      InternalUnsubscribeStatusChanged(_stateChangedSubscriptionsByEntityId, entityId, value);
+      InternalUnsubscribeStateChanged(_stateChangedSubscriptionsByEntityId, entityId, value);
     }
 
     /// <summary>
@@ -88,9 +88,9 @@ namespace HassClient.WebSocket
     /// </summary>
     /// <param name="domain">The domain to track.</param>
     /// <param name="value">The <see cref="EventHandler{StateChangedEvent}" /> to be included.</param>
-    public void SubscribeDomainStatusChanged(string domain, EventHandler<StateChangedEvent> value)
+    public void SubscribeDomainStateChanged(string domain, EventHandler<StateChangedEvent> value)
     {
-      InternalSubscribeStatusChanged(_stateChangedSubscriptionsByDomain, domain, value);
+      InternalSubscribeStateChanged(_stateChangedSubscriptionsByDomain, domain, value);
     }
 
     /// <summary>
@@ -98,12 +98,12 @@ namespace HassClient.WebSocket
     /// </summary>
     /// <param name="domain">The tracked domain.</param>
     /// <param name="value">The <see cref="EventHandler{StateChangedEvent}" /> to be removed.</param>
-    public void UnsubscribeDomainStatusChanged(string domain, EventHandler<StateChangedEvent> value)
+    public void UnsubscribeDomainStateChanged(string domain, EventHandler<StateChangedEvent> value)
     {
-      InternalUnsubscribeStatusChanged(_stateChangedSubscriptionsByDomain, domain, value);
+      InternalUnsubscribeStateChanged(_stateChangedSubscriptionsByDomain, domain, value);
     }
 
-    private void InternalSubscribeStatusChanged(Dictionary<string, EventHandler<StateChangedEvent>> register,
+    private void InternalSubscribeStateChanged(Dictionary<string, EventHandler<StateChangedEvent>> register,
       string key, EventHandler<StateChangedEvent> value)
     {
       if (!register.ContainsKey(key))
@@ -116,7 +116,7 @@ namespace HassClient.WebSocket
       register[key] += value;
     }
 
-    private void InternalUnsubscribeStatusChanged(Dictionary<string, EventHandler<StateChangedEvent>> register,
+    private void InternalUnsubscribeStateChanged(Dictionary<string, EventHandler<StateChangedEvent>> register,
       string key, EventHandler<StateChangedEvent> value)
     {
       if (register.TryGetValue(key, out EventHandler<StateChangedEvent> subscriptions))
