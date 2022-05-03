@@ -57,18 +57,18 @@ internal class EntityRegistryStorageCollectionCommandProcessor
     JToken merged)
   {
     string entityId = merged.Value<string>("entity_id");
-    if (string.IsNullOrEmpty(entityId)) return ErrorCodes.InvalidFormat;
+    if (string.IsNullOrEmpty(entityId)) return ErrorCode.InvalidFormat;
 
     if (commandType.EndsWith("get")) return FindRegistryEntry(context, entityId, true);
 
     if (commandType.EndsWith("remove"))
     {
       MockRegistryEntity mockEntry = FindRegistryEntry(context, entityId, false);
-      if (mockEntry == null) return ErrorCodes.NotFound;
+      if (mockEntry == null) return ErrorCode.NotFound;
 
       context.HassDb.DeleteObject(mockEntry);
       bool result = context.HassDb.DeleteObject(mockEntry.Entry);
-      return result ? null : ErrorCodes.NotFound;
+      return result ? null : ErrorCode.NotFound;
     }
 
     return base.ProccessUnknownCommand(commandType, context, merged);

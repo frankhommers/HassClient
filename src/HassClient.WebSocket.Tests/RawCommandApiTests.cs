@@ -34,7 +34,7 @@ public class RawCommandApiTests : BaseHassWsApiTest
     Assert.IsFalse(result.Success);
     Assert.IsNull(result.Result);
     Assert.IsNotNull(result.Error);
-    Assert.AreEqual(ErrorCodes.UnknownCommand, result.Error.Code);
+    Assert.AreEqual(ErrorCode.UnknownCommand, result.Error.Code);
   }
 
   [Test]

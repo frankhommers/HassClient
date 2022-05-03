@@ -3,7 +3,7 @@
   /// <summary>
   ///   Defines the connection states for <see cref="HassClientWebSocket" />.
   /// </summary>
-  public enum ConnectionStates
+  public enum ConnectionState
   {
     /// <summary>
     ///   The web socket client is disconnected.

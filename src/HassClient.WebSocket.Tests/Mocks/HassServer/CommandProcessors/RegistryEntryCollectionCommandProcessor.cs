@@ -73,18 +73,18 @@ public class RegistryEntryCollectionCommandProcessor<TFactory, TModel> : BaseCom
       else if (commandType.EndsWith("delete"))
         result = ProccessDeleteCommand(context, merged);
       else if (commandType.EndsWith("update"))
-        result = ProccessUpdateCommand(context, merged) ?? ErrorCodes.NotFound;
+        result = ProccessUpdateCommand(context, merged) ?? ErrorCode.NotFound;
       else
         result = ProccessUnknownCommand(commandType, context, merged);
 
-      if (result is ErrorCodes errorCode) return CreateResultMessageWithError(new ErrorInfo(errorCode));
+      if (result is ErrorCode errorCode) return CreateResultMessageWithError(new ErrorInfo(errorCode));
 
       JRaw resultObject = new(HassSerializer.SerializeObject(result));
       return CreateResultMessageWithResult(resultObject);
     }
     catch (Exception ex)
     {
-      return CreateResultMessageWithError(new ErrorInfo(ErrorCodes.UnknownError) { Message = ex.Message });
+      return CreateResultMessageWithError(new ErrorInfo(ErrorCode.UnknownError) { Message = ex.Message });
     }
   }
 
@@ -156,7 +156,7 @@ public class RegistryEntryCollectionCommandProcessor<TFactory, TModel> : BaseCom
   protected virtual object ProccessUnknownCommand(string commandType, MockHassServerRequestContext context,
     JToken merged)
   {
-    return ErrorCodes.NotSupported;
+    return ErrorCode.NotSupported;
   }
 
   protected virtual void PrepareHassContext(MockHassServerRequestContext context)

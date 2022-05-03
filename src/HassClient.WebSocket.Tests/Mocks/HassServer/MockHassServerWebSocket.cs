@@ -117,7 +117,7 @@ public class MockHassServerWebSocket : MockServerWebSocket
           BaseIdentifiableMessage response;
           if (context.LastReceivedID >= receivedMessageId)
           {
-            response = new ResultMessage { Error = new ErrorInfo(ErrorCodes.IdReuse) };
+            response = new ResultMessage { Error = new ErrorInfo(ErrorCode.IdReuse) };
           }
           else
           {
@@ -126,7 +126,7 @@ public class MockHassServerWebSocket : MockServerWebSocket
             if (receivedMessage is PingMessage)
               response = new PongMessage();
             else if (!context.TryProccesMessage(receivedMessage, out response))
-              response = new ResultMessage { Error = new ErrorInfo(ErrorCodes.UnknownCommand) };
+              response = new ResultMessage { Error = new ErrorInfo(ErrorCode.UnknownCommand) };
           }
 
           response.Id = receivedMessageId;

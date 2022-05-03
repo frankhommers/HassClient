@@ -28,7 +28,7 @@ namespace HassClient.WebSocket
     /// <summary>
     ///   Gets the current connection state of the web socket.
     /// </summary>
-    public ConnectionStates ConnectionState => _hassClientWebSocket.ConnectionState;
+    public ConnectionState ConnectionState => _hassClientWebSocket.ConnectionState;
 
     /// <summary>
     ///   Gets the <see cref="StateChangedEventListener" /> instance of this client instance.
@@ -38,7 +38,7 @@ namespace HassClient.WebSocket
     /// <summary>
     ///   Occurs when the <see cref="ConnectionState" /> is changed.
     /// </summary>
-    public event EventHandler<ConnectionStates> ConnectionStateChanged
+    public event EventHandler<ConnectionState> ConnectionStateChanged
     {
       add => _hassClientWebSocket.ConnectionStateChanged += value;
       remove => _hassClientWebSocket.ConnectionStateChanged -= value;

@@ -41,7 +41,7 @@ public abstract class BaseHassWsApiTest
     HassSerializer.DefaultSettings.MissingMemberHandling = MissingMemberHandling.Error;
     HassSerializer.DefaultSettings.Error += HassSerializerError;
 
-    Assert.AreEqual(HassWsApi.ConnectionState, ConnectionStates.Connected, "SetUp failed");
+    Assert.AreEqual(HassWsApi.ConnectionState, ConnectionState.Connected, "SetUp failed");
   }
 
   private void HassSerializerError(object sender, ErrorEventArgs args)

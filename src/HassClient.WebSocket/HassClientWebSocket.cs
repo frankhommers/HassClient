@@ -50,7 +50,7 @@ namespace HassClient.WebSocket
     private CancellationTokenSource _closeConnectionCts;
 
     private ConnectionParameters _connectionParameters;
-    private ConnectionStates _connectionState;
+    private ConnectionState _connectionState;
     private TaskCompletionSource<bool> _connectionTcs;
     private Task _eventListenerTask;
     private uint _lastSentId;
@@ -81,7 +81,7 @@ namespace HassClient.WebSocket
     /// <summary>
     ///   Gets the current connection state of the web socket.
     /// </summary>
-    public ConnectionStates ConnectionState
+    public ConnectionState ConnectionState
     {
       get => _connectionState;
       private set
@@ -89,7 +89,7 @@ namespace HassClient.WebSocket
         if (_connectionState != value)
         {
           _connectionState = value;
-          if (value == ConnectionStates.Connected) _connectionTcs.TrySetResult(true);
+          if (value == ConnectionState.Connected) _connectionTcs.TrySetResult(true);
 
           ConnectionStateChanged?.Invoke(this, value);
         }
@@ -135,7 +135,7 @@ namespace HassClient.WebSocket
     /// <summary>
     ///   Occurs when the <see cref="ConnectionState" /> is changed.
     /// </summary>
-    public event EventHandler<ConnectionStates> ConnectionStateChanged;
+    public event EventHandler<ConnectionState> ConnectionStateChanged;
 
     /// <summary>
     ///   Connects to a Home Assistant instance using the specified connection parameters.
@@ -170,7 +170,7 @@ namespace HassClient.WebSocket
           nameof(cancellationToken),
           $"{nameof(cancellationToken)} must be set to a value different to {nameof(CancellationToken.None)} when retrying indefinitely");
 
-      if (ConnectionState != ConnectionStates.Disconnected)
+      if (ConnectionState != ConnectionState.Disconnected)
         throw new InvalidOperationException($"{nameof(HassClientWebSocket)} is not disconnected.");
 
       _closeConnectionCts = new CancellationTokenSource();
@@ -195,7 +195,7 @@ namespace HassClient.WebSocket
     {
       CheckIsDiposed();
 
-      if (ConnectionState == ConnectionStates.Disconnected) return;
+      if (ConnectionState == ConnectionState.Disconnected) return;
 
       cancellationToken.ThrowIfCancellationRequested();
 
@@ -259,7 +259,7 @@ namespace HassClient.WebSocket
         throw new ArgumentException(
           $"Either {nameof(timeout)} or {nameof(cancellationToken)} must be set to avoid never ending wait.");
 
-      if (_connectionState == ConnectionStates.Connected) return Task.FromResult(true);
+      if (_connectionState == ConnectionState.Connected) return Task.FromResult(true);
 
       if (_connectionTcs == null) return Task.FromResult(false);
 
@@ -269,7 +269,7 @@ namespace HassClient.WebSocket
     private async Task InternalConnect(ConnectionParameters connectionParameters, int retries,
       CancellationToken cancellationToken)
     {
-      ConnectionState = ConnectionStates.Connecting;
+      ConnectionState = ConnectionState.Connecting;
 
       bool retry = false;
       do
@@ -286,7 +286,7 @@ namespace HassClient.WebSocket
           _socket = new ClientWebSocket();
           await _socket.ConnectAsync(connectionParameters.Endpoint, cancellationToken).ConfigureAwait(false);
 
-          ConnectionState = ConnectionStates.Authenticating;
+          ConnectionState = ConnectionState.Authenticating;
 
           BaseMessage incomingMsg = await ReceiveMessage<BaseMessage>(_receivingBuffer, cancellationToken);
           if (incomingMsg is AuthenticationRequiredMessage)
@@ -306,7 +306,7 @@ namespace HassClient.WebSocket
               if (IsReconnecting) await RestoreEventsSubscriptionsAsync(cancellationToken);
 
               IsReconnecting = false;
-              ConnectionState = ConnectionStates.Connected;
+              ConnectionState = ConnectionState.Connected;
 
               Trace.WriteLine($"{TAG} Authentication succeed. Client connected {nameof(HAVersion)}: {HAVersion}");
             }
@@ -334,7 +334,7 @@ namespace HassClient.WebSocket
         }
         finally
         {
-          if (!retry && ConnectionState != ConnectionStates.Connected) ClearSocketResources();
+          if (!retry && ConnectionState != ConnectionState.Connected) ClearSocketResources();
 
           if (_connectionSemaphore.CurrentCount == 0) _connectionSemaphore.Release();
         }
@@ -347,7 +347,7 @@ namespace HassClient.WebSocket
 
       foreach (KeyValuePair<string, SocketEventSubscription> item in _socketEventSubscriptionIdByEventType)
       {
-        ConnectionState = ConnectionStates.Restoring;
+        ConnectionState = ConnectionState.Restoring;
 
         string eventType = item.Key;
         while (true)
@@ -408,7 +408,7 @@ namespace HassClient.WebSocket
       {
       }
 
-      ConnectionState = ConnectionStates.Disconnected;
+      ConnectionState = ConnectionState.Disconnected;
       Trace.WriteLine($"{TAG} Connection ended {_socket.CloseStatus?.ToString() ?? _socket.State.ToString()}");
 
       if (closeCancellationToken.IsCancellationRequested) return;
@@ -442,9 +442,9 @@ namespace HassClient.WebSocket
 
     private void ClearSocketResources()
     {
-      if (ConnectionState != ConnectionStates.Disconnected)
+      if (ConnectionState != ConnectionState.Disconnected)
       {
-        ConnectionState = ConnectionStates.Disconnected;
+        ConnectionState = ConnectionState.Disconnected;
         IsReconnecting = false;
 
         _connectionParameters = null;
@@ -544,7 +544,7 @@ namespace HassClient.WebSocket
     private async Task<ResultMessage> SendCommandAsync(BaseOutgoingMessage commandMessage,
       CancellationToken cancellationToken)
     {
-      if (ConnectionState != ConnectionStates.Connected) throw new InvalidOperationException("Client not connected.");
+      if (ConnectionState != ConnectionState.Connected) throw new InvalidOperationException("Client not connected.");
 
       try
       {
@@ -584,14 +584,14 @@ namespace HassClient.WebSocket
 
       switch (errorInfo.Code)
       {
-        case ErrorCodes.Undefined:
-        case ErrorCodes.InvalidFormat:
-        case ErrorCodes.IdReuse:
-        case ErrorCodes.HomeAssistantError:
-        case ErrorCodes.NotSupported:
+        case ErrorCode.Undefined:
+        case ErrorCode.InvalidFormat:
+        case ErrorCode.IdReuse:
+        case ErrorCode.HomeAssistantError:
+        case ErrorCode.NotSupported:
           throw new InvalidOperationException($"{errorInfo.Code}: {errorInfo.Message}");
-        case ErrorCodes.Unauthorized: throw new UnauthorizedAccessException(errorInfo.Message);
-        case ErrorCodes.Timeout: throw new TimeoutException(errorInfo.Message);
+        case ErrorCode.Unauthorized: throw new UnauthorizedAccessException(errorInfo.Message);
+        case ErrorCode.Timeout: throw new TimeoutException(errorInfo.Message);
       }
 
       Trace.TraceWarning($"Error response received for command [{commandMessage}] => {resultMessage.Error}");

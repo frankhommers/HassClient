@@ -51,7 +51,7 @@ public class HassClientWebSocketTests
     await StartMockServerAndConnectClientAsync();
 
     Assert.AreEqual(3, _connectionChangedSubscriber.HitCount);
-    Assert.AreEqual(new[] { ConnectionStates.Connecting, ConnectionStates.Authenticating, ConnectionStates.Connected },
+    Assert.AreEqual(new[] { ConnectionState.Connecting, ConnectionState.Authenticating, ConnectionState.Connected },
       _connectionChangedSubscriber.ReceivedEventArgs);
   }
 
@@ -63,7 +63,7 @@ public class HassClientWebSocketTests
     await _wsClient.CloseAsync();
 
     Assert.AreEqual(1, _connectionChangedSubscriber.HitCount);
-    Assert.AreEqual(new[] { ConnectionStates.Disconnected }, _connectionChangedSubscriber.ReceivedEventArgs);
+    Assert.AreEqual(new[] { ConnectionState.Disconnected }, _connectionChangedSubscriber.ReceivedEventArgs);
   }
 
   [Test]
@@ -74,7 +74,7 @@ public class HassClientWebSocketTests
     await _mockServer.CloseActiveClientsAsync();
 
     Assert.GreaterOrEqual(_connectionChangedSubscriber.HitCount, 1);
-    Assert.AreEqual(ConnectionStates.Disconnected, _connectionChangedSubscriber.ReceivedEventArgs.FirstOrDefault());
+    Assert.AreEqual(ConnectionState.Disconnected, _connectionChangedSubscriber.ReceivedEventArgs.FirstOrDefault());
   }
 
   [Test]
@@ -90,7 +90,7 @@ public class HassClientWebSocketTests
 
     _connectionCts.Cancel();
 
-    Assert.AreEqual(ConnectionStates.Connected, _wsClient.ConnectionState);
+    Assert.AreEqual(ConnectionState.Connected, _wsClient.ConnectionState);
   }
 
   [Test]
@@ -100,14 +100,14 @@ public class HassClientWebSocketTests
     await StartMockServerAsync();
 
     Task connectTask = ConnectClientAsync();
-    await _connectionChangedSubscriber.WaitEventArgWithTimeoutAsync(ConnectionStates.Authenticating, 1000);
+    await _connectionChangedSubscriber.WaitEventArgWithTimeoutAsync(ConnectionState.Authenticating, 1000);
 
-    Assert.AreEqual(ConnectionStates.Authenticating, _wsClient.ConnectionState, "SetUp Failed");
+    Assert.AreEqual(ConnectionState.Authenticating, _wsClient.ConnectionState, "SetUp Failed");
 
     _connectionCts.Cancel();
 
     Assert.CatchAsync<OperationCanceledException>(() => connectTask);
-    Assert.AreEqual(ConnectionStates.Disconnected, _wsClient.ConnectionState);
+    Assert.AreEqual(ConnectionState.Disconnected, _wsClient.ConnectionState);
     Assert.AreEqual(TaskStatus.Canceled, connectTask.Status);
   }
 
@@ -121,7 +121,7 @@ public class HassClientWebSocketTests
     await _wsClient.CloseAsync();
 
     Assert.CatchAsync<OperationCanceledException>(async () => await connectTask);
-    Assert.AreEqual(ConnectionStates.Disconnected, _wsClient.ConnectionState);
+    Assert.AreEqual(ConnectionState.Disconnected, _wsClient.ConnectionState);
   }
 
   [Test]
@@ -165,7 +165,7 @@ public class HassClientWebSocketTests
   {
     await StartMockServerAndConnectClientAsync();
 
-    Assert.AreNotEqual(ConnectionStates.Disconnected, _wsClient.ConnectionState);
+    Assert.AreNotEqual(ConnectionState.Disconnected, _wsClient.ConnectionState);
     Assert.ThrowsAsync<InvalidOperationException>(() => ConnectClientAsync());
   }
 
@@ -287,7 +287,7 @@ public class HassClientWebSocketTests
     await _mockServer.CloseActiveClientsAsync();
     await _wsClient.WaitForConnectionAsync(TimeSpan.FromMilliseconds(200));
 
-    Assert.AreEqual(ConnectionStates.Connected, _wsClient.ConnectionState);
+    Assert.AreEqual(ConnectionState.Connected, _wsClient.ConnectionState);
   }
 
   [Test]

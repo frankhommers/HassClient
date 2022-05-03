@@ -3,7 +3,7 @@
   /// <summary>
   ///   Represents the error codes for <see cref="ErrorInfo" />.
   /// </summary>
-  public enum ErrorCodes
+  public enum ErrorCode
   {
     /// <summary>
     ///   Undefined error code.
