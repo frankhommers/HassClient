@@ -36,7 +36,7 @@ public class HassClientWebSocketTests
 
   private Task ConnectClientAsync(int retries = 0)
   {
-    return _wsClient.ConnectAsync(_mockServer.ConnectionParameters, retries, _connectionCts.Token);
+    return _wsClient.ConnectAsync(_mockServer.ConnectionParameters, retries, null, _connectionCts.Token);
   }
 
   private async Task StartMockServerAndConnectClientAsync()
@@ -157,7 +157,7 @@ public class HassClientWebSocketTests
     };
 
     await AssertExtensions.ThrowsAsync<AuthenticationException>(_wsClient.ConnectAsync(invalidParameters, -1,
-      _connectionCts.Token));
+      null, _connectionCts.Token));
   }
 
   [Test]

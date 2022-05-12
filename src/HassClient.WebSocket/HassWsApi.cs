@@ -69,10 +69,11 @@ namespace HassClient.WebSocket
     public async Task ConnectAsync(ConnectionParameters connectionParameters, int retries = 0,
       CancellationToken cancellationToken = default)
     {
-      await _hassClientWebSocket.ConnectAsync(connectionParameters, retries, cancellationToken);
-
-      StateChangedEventListener = new StateChangedEventListener();
-      StateChangedEventListener.Initialize(_hassClientWebSocket);
+      await _hassClientWebSocket.ConnectAsync(connectionParameters, retries, () =>
+      {
+        StateChangedEventListener = new StateChangedEventListener();
+        StateChangedEventListener.Initialize(_hassClientWebSocket);
+      }, cancellationToken);
     }
 
     /// <summary>

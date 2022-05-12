@@ -84,7 +84,7 @@ namespace HassClient.WebSocket
     public ConnectionState ConnectionState
     {
       get => _connectionState;
-      private set
+      internal set
       {
         if (_connectionState != value)
         {
@@ -160,7 +160,7 @@ namespace HassClient.WebSocket
     /// </param>
     /// <returns>The task object representing the asynchronous operation.</returns>
     public async Task ConnectAsync(ConnectionParameters connectionParameters, int retries = 0,
-      CancellationToken cancellationToken = default)
+      Action? onConnected = null, CancellationToken cancellationToken = default)
     {
       CheckIsDiposed();
 
@@ -178,8 +178,8 @@ namespace HassClient.WebSocket
       _receivingBuffer = new ArraySegment<byte>(new byte[INCOMING_BUFFER_SIZE]);
       CancellationTokenSource linkedCts =
         CancellationTokenSource.CreateLinkedTokenSource(_closeConnectionCts.Token, cancellationToken);
-      await InternalConnect(connectionParameters, retries, linkedCts.Token).ConfigureAwait(false);
-      this._connectionParameters = connectionParameters;
+      await InternalConnect(connectionParameters, retries, onConnected, linkedCts.Token).ConfigureAwait(false);
+      _connectionParameters = connectionParameters;
       _receivedEventsChannel = Channel.CreateUnbounded<EventResultMessage>();
       _eventListenerTask = Task.Factory.StartNew(CreateEventListenerTask, TaskCreationOptions.LongRunning);
     }
@@ -200,7 +200,7 @@ namespace HassClient.WebSocket
       cancellationToken.ThrowIfCancellationRequested();
 
       _closeConnectionCts?.Cancel();
-      await _connectionSemaphore.WaitAsync();
+      await _connectionSemaphore.WaitAsync(cancellationToken);
 
       ClearSocketResources();
       _connectionSemaphore.Release();
@@ -267,7 +267,7 @@ namespace HassClient.WebSocket
     }
 
     private async Task InternalConnect(ConnectionParameters connectionParameters, int retries,
-      CancellationToken cancellationToken)
+      Action? onConnected, CancellationToken cancellationToken)
     {
       ConnectionState = ConnectionState.Connecting;
 
@@ -306,6 +306,7 @@ namespace HassClient.WebSocket
               if (IsReconnecting) await RestoreEventsSubscriptionsAsync(cancellationToken);
 
               IsReconnecting = false;
+              onConnected?.Invoke();
               ConnectionState = ConnectionState.Connected;
 
               Trace.WriteLine($"{TAG} Authentication succeed. Client connected {nameof(HAVersion)}: {HAVersion}");
@@ -316,7 +317,7 @@ namespace HassClient.WebSocket
             throw new AuthenticationException("Unexpected message received during authentication.");
           }
 
-          _socketListenerTask = Task.Factory.StartNew(CreateSocketListenerTask, TaskCreationOptions.LongRunning);
+          _socketListenerTask = Task.Factory.StartNew(() => CreateSocketListenerTask(onConnected), TaskCreationOptions.LongRunning);
         }
         catch (Exception ex)
         {
@@ -325,7 +326,7 @@ namespace HassClient.WebSocket
           if (retry)
           {
             Trace.WriteLine($"{TAG} Connecting attempt failed. Retrying in {_retryingInterval.TotalSeconds} seconds...");
-            await Task.Delay(_retryingInterval);
+            await Task.Delay(_retryingInterval, cancellationToken);
           }
           else
           {
@@ -365,7 +366,7 @@ namespace HassClient.WebSocket
       }
     }
 
-    private async Task CreateSocketListenerTask()
+    private async Task CreateSocketListenerTask(Action onConnected)
     {
       CancellationToken closeCancellationToken = _closeConnectionCts.Token;
 
@@ -417,7 +418,7 @@ namespace HassClient.WebSocket
           _connectionParameters != null)
       {
         IsReconnecting = true;
-        _socketListenerTask = Task.Run(() => InternalConnect(_connectionParameters, -1, closeCancellationToken));
+        _socketListenerTask = Task.Run(() => InternalConnect(_connectionParameters, -1, onConnected, closeCancellationToken), closeCancellationToken);
       }
       else
       {
